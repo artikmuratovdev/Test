@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript Mastery — Tasodifiy Test</title>
+  <!-- Tailwind CSS CDN -->
+   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-10 px-4">
+
+  <div class="max-w-3xl mx-auto">
+    <!-- Sarlavha -->
+    <header class="text-center mb-8">
+      <h1 class="text-3xl font-extrabold text-amber-400 mb-2">JavaScript Mastery Testi</h1>
+      <p class="text-slate-400">1-3 darslar bo'yicha dinamik test (Har safar savollar va variantlar joyi almashadi)</p>
+    </header>
+
+    <!-- Dastlabki Yuklanish Spinneri -->
+    <div id="initial-loading" class="text-center py-20 bg-slate-800 rounded-2xl border border-slate-700 shadow-xl">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent mb-4"></div>
+      <p class="text-slate-300 font-medium">Savollar Apps Script'dan yuklanib, tasodifiy aralashtirilmoqda...</p>
+    </div>
+
+    <!-- Test Konteyneri -->
+    <div id="quiz-container" class="hidden bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700">
+      <div id="questions-list" class="space-y-6"></div>
+
+      <!-- Yuborish Tugmasi -->
+      <div class="mt-8 pt-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <span id="answered-count" class="text-slate-400 text-sm font-medium">0 / 0 javob belgilandi</span>
+        <button id="submit-btn" onclick="submitQuiz()" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-8 rounded-xl transition duration-200">
+          Javoblarni Yuborish
+        </button>
+      </div>
+    </div>
+
+    <!-- Tekshirish Spinneri -->
+    <div id="checking-loading" class="hidden text-center py-20 bg-slate-800 rounded-2xl border border-slate-700">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent mb-4"></div>
+      <p class="text-slate-300 font-medium">Javoblaringiz Apps Script'da tekshirilmoqda...</p>
+    </div>
+
+    <!-- Natija Oynasi -->
+    <div id="result-modal" class="hidden bg-slate-800 rounded-2xl p-8 shadow-2xl border border-amber-500/30 text-center space-y-6">
+      <h2 class="text-2xl font-bold text-slate-100">Test Natijasi</h2>
+      <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-slate-900 border-4 border-amber-400">
+        <span id="score-percentage" class="text-3xl font-black text-amber-400">0%</span>
+      </div>
+      <p id="score-text" class="text-lg text-slate-300 font-medium"></p>
+      
+      <button onclick="location.reload()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 px-6 rounded-xl transition">
+        Qayta topshirish
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ O'ZINGIZNING GOOGLE APPS SCRIPT WEB APP URL'INGIZNI SHU YERGA QO'YING:
+    const APPS_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+
+    let questionsData = [];
+    const userAnswers = {};
+
+    // Fisher-Yates algoritmi orqali massivni tasodifiy aralashtirish funksiyasi
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // 1. PAGE LOAD: Apps Script'dan savollarni olib kelish (GET) va aralashtirish
+    async function fetchQuestions() {
+      try {
+        const response = await fetch(APPS_SCRIPT_URL);
+        const data = await response.json();
+
+        if (data.status === "success" && data.questions) {
+          // A) SAVOLLAR TARTIBINI TASODIFIY ALMASHTIRAMIZ
+          questionsData = shuffleArray(data.questions);
+          
+          renderQuestions();
+          document.getElementById("initial-loading").classList.add("hidden");
+          document.getElementById("quiz-container").classList.remove("hidden");
+        } else {
+          alert("Savollarni yuklashda xatolik yuz berdi.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Apps Script bilan bog'lanib bo'lmadi. Web App URL manzilini tekshiring.");
+      }
+    }
+
+    // Savollar va variantlarni ekranga chiqarish
+    function renderQuestions() {
+      const list = document.getElementById("questions-list");
+      document.getElementById("answered-count").innerText = `0 / ${questionsData.length} javob belgilandi`;
+
+      list.innerHTML = questionsData.map((q, index) => {
+        // Savol matnining boshidagi eski raqamni o'chirib, yangi tartib raqamini (1..30) beramiz
+        const cleanQuestionText = q.text.replace(/^\d+\.\s*/, '');
+        
+        // B) HAR BIR SAVOLNING VARIANTLARINI TASODIFIY ALMASHTIRAMIZ
+        const shuffledOptions = shuffleArray(Object.entries(q.options));
+
+        return `
+          <div class="p-5 bg-slate-900/70 rounded-xl border border-slate-700/60 shadow-sm">
+            <p class="font-semibold text-slate-100 mb-4 leading-relaxed">${index + 1}. ${cleanQuestionText}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              ${shuffledOptions.map(([key, val]) => `
+                <label class="flex items-center space-x-3 p-3.5 rounded-lg bg-slate-800/90 hover:bg-slate-700/80 cursor-pointer transition border border-slate-700/80">
+                  <input type="radio" name="question-${q.id}" value="${key}" onchange="selectAnswer(${q.id}, '${key}')" class="w-4 h-4 text-amber-500 focus:ring-amber-400 border-slate-600 bg-slate-900">
+                  <span class="text-slate-300 text-sm"><strong class="text-amber-400 font-bold mr-1">${key})</strong> ${val}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Javob belgilanganda sanagichni yangilash
+    function selectAnswer(questionId, optionKey) {
+      userAnswers[questionId] = optionKey;
+      const count = Object.keys(userAnswers).length;
+      document.getElementById("answered-count").innerText = `${count} / ${questionsData.length} javob belgilandi`;
+    }
+
+    // 2. SUBMIT: Javoblarni Apps Script'ga yuborib tekshirish (POST)
+    async function submitQuiz() {
+      if (Object.keys(userAnswers).length === 0) {
+        alert("Iltimos, kamida bitta savolga javob belgilang!");
+        return;
+      }
+
+      document.getElementById("quiz-container").classList.add("hidden");
+      document.getElementById("checking-loading").classList.remove("hidden");
+
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ answers: userAnswers })
+        });
+
+        const result = await response.json();
+
+        document.getElementById("checking-loading").classList.add("hidden");
+        document.getElementById("result-modal").classList.remove("hidden");
+
+        if (result.status === "success") {
+          document.getElementById("score-percentage").innerText = `${result.percentage}%`;
+          document.getElementById("score-text").innerText = 
+            `Siz ${result.total} ta savoldan ${result.score} tasiga to'g'ri javob berdingiz.`;
+        } else {
+          alert("Xatolik yuz berdi: " + result.message);
+        }
+
+      } catch (error) {
+        document.getElementById("checking-loading").classList.add("hidden");
+        alert("Server bilan bog'lanishda xatolik yuz berdi.");
+        console.error(error);
+      }
+    }
+
+    // Sahifa yuklanganda savollarni avtomatik olish
+    window.addEventListener("DOMContentLoaded", fetchQuestions);
+  </script>
+</body>
+</html>
