@@ -3,44 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JavaScript Mastery — Paginated Test</title>
+  <title>JavaScript Mastery — Responsive Test</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen py-8 px-4 flex flex-col justify-between">
+<body class="bg-slate-900 text-slate-100 min-h-screen py-6 px-4 flex flex-col justify-between">
 
-  <div class="max-w-3xl w-full mx-auto">
+  <!-- Kengaytirilgan asosiy konteyner -->
+  <div class="max-w-6xl w-full mx-auto">
     <!-- Sarlavha -->
     <header class="text-center mb-6">
       <h1 class="text-2xl sm:text-3xl font-extrabold text-amber-400 mb-1">JavaScript Mastery Testi</h1>
-      <p class="text-slate-400 text-sm">Savollarni birma-bir yeching yoki katakchalar orqali istalganiga o'ting</p>
+      <p class="text-slate-400 text-sm">1-3 darslar bo'yicha interaktiv test</p>
     </header>
 
     <!-- Dastlabki Yuklanish Spinneri -->
-    <div id="initial-loading" class="text-center py-20 bg-slate-800 rounded-2xl border border-slate-700 shadow-xl">
+    <div id="initial-loading" class="text-center py-20 bg-slate-800 rounded-2xl border border-slate-700 shadow-xl max-w-xl mx-auto">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent mb-4"></div>
       <p class="text-slate-300 font-medium">Savollar yuklanmoqda...</p>
     </div>
 
-    <!-- Test Konteyneri -->
-    <div id="quiz-container" class="hidden space-y-6">
+    <!-- Responsive Test Konteyneri: mobilda flex-col, lg da grid yonma-yon -->
+    <div id="quiz-container" class="hidden flex flex-col lg:grid lg:grid-cols-12 gap-6 items-start">
       
-      <!-- Savollar Navigatsiya Paneli (Katakchalar) -->
-      <div class="bg-slate-800/90 rounded-2xl p-4 sm:p-5 border border-slate-700/80 shadow-lg">
+      <!-- 1. SAVOLLAR RO'YXATI (Katakchalar paneli) -->
+      <!-- Mobilda: order-2 (savolning tagida); lg ekranda: order-1 (chap tomonda 4 ustun) -->
+      <aside class="w-full order-2 lg:order-1 lg:col-span-4 bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-lg lg:sticky lg:top-6">
         <div class="flex justify-between items-center mb-3">
           <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Savollar ro'yxati</span>
           <span id="answered-count" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-700 text-amber-400">
             0 / 0 bajarildi
           </span>
         </div>
-        <div id="pagination-grid" class="grid grid-cols-6 sm:grid-cols-10 gap-2"></div>
-      </div>
+        <!-- Katakchalar gridi -->
+        <div id="pagination-grid" class="grid grid-cols-6 sm:grid-cols-10 lg:grid-cols-5 gap-2"></div>
+      </aside>
 
-      <!-- Bitta savol ko'rsatiladigan hudud -->
-      <div class="bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-700 relative">
+      <!-- 2. SAVOL KO'RSATILADIGAN ASOSIY QISM -->
+      <!-- Mobilda: order-1 (ro'yxatning tepasida); lg ekranda: order-2 (o'ng tomonda 8 ustun) -->
+      <main class="w-full order-1 lg:order-2 lg:col-span-8 bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-700">
         <div id="single-question-area"></div>
 
-        <!-- Pastki Boshqaruv Tugmalari -->
+        <!-- Boshqaruv Tugmalari -->
         <div class="mt-8 pt-6 border-t border-slate-700/80 flex flex-wrap justify-between items-center gap-3">
           <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-2.5 rounded-xl border border-slate-600 bg-slate-700 hover:bg-slate-600 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
             &larr; Oldingi
@@ -55,18 +59,18 @@
             </button>
           </div>
         </div>
-      </div>
+      </main>
 
     </div>
 
     <!-- Tekshirish Spinneri -->
-    <div id="checking-loading" class="hidden text-center py-20 bg-slate-800 rounded-2xl border border-slate-700">
+    <div id="checking-loading" class="hidden text-center py-20 bg-slate-800 rounded-2xl border border-slate-700 max-w-xl mx-auto">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-400 border-t-transparent mb-4"></div>
       <p class="text-slate-300 font-medium">Javoblaringiz serverda tekshirilmoqda...</p>
     </div>
 
     <!-- Natija Oynasi -->
-    <div id="result-modal" class="hidden bg-slate-800 rounded-2xl p-8 shadow-2xl border border-amber-500/30 text-center space-y-6">
+    <div id="result-modal" class="hidden bg-slate-800 rounded-2xl p-8 shadow-2xl border border-amber-500/30 text-center space-y-6 max-w-md mx-auto">
       <h2 class="text-2xl font-bold text-slate-100">Test Natijasi</h2>
       <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-slate-900 border-4 border-amber-400 shadow-inner">
         <span id="score-percentage" class="text-3xl font-black text-amber-400">0%</span>
@@ -84,7 +88,7 @@
 
     let questionsData = [];
     const userAnswers = {};
-    let currentIndex = 0; // Hozir ko'rsatilayotgan savol indeksi
+    let currentIndex = 0;
 
     function shuffleArray(array) {
       const arr = [...array];
@@ -101,13 +105,10 @@
         const data = await response.json();
 
         if (data.status === "success" && data.questions) {
-          // Savollarni va ularning variantlarini randomlashtiramiz
-          questionsData = shuffleArray(data.questions).map(q => {
-            return {
-              ...q,
-              shuffledOptions: shuffleArray(Object.entries(q.options))
-            };
-          });
+          questionsData = shuffleArray(data.questions).map(q => ({
+            ...q,
+            shuffledOptions: shuffleArray(Object.entries(q.options))
+          }));
           
           document.getElementById("initial-loading").classList.add("hidden");
           document.getElementById("quiz-container").classList.remove("hidden");
@@ -123,21 +124,20 @@
       }
     }
 
-    // Yuqoridagi 1..30 katakchalarni yasash
     function renderPaginationGrid() {
       const grid = document.getElementById("pagination-grid");
       grid.innerHTML = questionsData.map((q, idx) => {
         const isAnswered = userAnswers[q.id] !== undefined;
         const isCurrent = idx === currentIndex;
 
-        let styleClass = "bg-slate-700/50 text-slate-400 border-slate-700"; // bo'sh turgan holati
+        let styleClass = "bg-slate-700/50 text-slate-400 border-slate-700";
 
         if (isAnswered) {
-          styleClass = "bg-emerald-600/30 text-emerald-300 border-emerald-500/70 shadow-sm shadow-emerald-950 font-bold"; // javob berilgan
+          styleClass = "bg-emerald-600/30 text-emerald-300 border-emerald-500/70 shadow-sm shadow-emerald-950 font-bold";
         }
 
         if (isCurrent) {
-          styleClass += " ring-2 ring-amber-400 border-amber-400 text-amber-300 font-extrabold scale-105"; // ayni paytda ochiq turgan
+          styleClass += " ring-2 ring-amber-400 border-amber-400 text-amber-300 font-extrabold scale-105";
         }
 
         return `
@@ -154,7 +154,6 @@
       document.getElementById("answered-count").innerText = `${count} / ${questionsData.length} bajarildi`;
     }
 
-    // Aniq bitta savolni ekranga chiqarish
     function showQuestion(index) {
       if (index < 0 || index >= questionsData.length) return;
       currentIndex = index;
@@ -200,7 +199,6 @@
         </div>
       `;
 
-      // Tugmalar holati
       document.getElementById("prev-btn").disabled = (currentIndex === 0);
       document.getElementById("next-btn").disabled = (currentIndex === questionsData.length - 1);
 
@@ -209,7 +207,7 @@
 
     function selectAnswer(questionId, optionKey) {
       userAnswers[questionId] = optionKey;
-      showQuestion(currentIndex); // tanlangandan so'ng UI ni va navigation gridini yangilaydi
+      showQuestion(currentIndex);
     }
 
     function jumpToQuestion(index) {
