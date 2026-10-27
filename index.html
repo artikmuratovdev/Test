@@ -38,7 +38,7 @@
       </form>
     </div>
 
-    <!-- 2. TEST HUDUDI (Boshlash tugmasi bosilmaguncha yashirin turadi) -->
+    <!-- 2. TEST HUDUDI -->
     <div id="main-test-area" class="hidden">
       <!-- Sarlavha va Taymer Paneli -->
       <header class="flex flex-col sm:flex-row justify-between items-center bg-slate-800/80 p-4 sm:p-5 rounded-2xl border border-slate-700/80 shadow-md mb-6 gap-4">
@@ -126,7 +126,7 @@
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmx1k5hqCtvH36-v8gTXv2fRDE9QjSJvFIcMrlEZQ4-pIINfeDWPw_LgUQLVeMhv-r/exec";
     const STORAGE_KEY = "js_mastery_quiz_state";
-    const TOTAL_TIME_SECONDS = 20 * 60; // 20 daqiqa
+    const TOTAL_TIME_SECONDS = 20 * 60;
 
     let userName = "";
     let questionsData = [];
@@ -168,7 +168,6 @@
       return arr;
     }
 
-    // Taymerni ishga tushirish funksiyasi
     function startTimer() {
       updateTimerDisplay();
       if (timerInterval) clearInterval(timerInterval);
@@ -181,7 +180,7 @@
         if (remainingSeconds <= 0) {
           clearInterval(timerInterval);
           alert("Vaqtingiz tugadi! Javoblaringiz avtomatik topshiriladi.");
-          submitQuiz(true); // true = vaqt tugaganligi uchun majburiy yuborish
+          submitQuiz(true);
         }
       }, 1000);
     }
@@ -196,7 +195,6 @@
 
       if (display) display.innerText = formatted;
 
-      // 3 daqiqa (180 soniya) qolganda ogohlantiruvchi qizil animatsiya
       if (remainingSeconds <= 180 && box) {
         box.classList.remove("border-amber-500/30");
         box.classList.add("border-rose-500", "bg-rose-950/40", "animate-pulse");
@@ -354,10 +352,37 @@
       renderPaginationGrid();
     }
 
+    // Keyingi belgilanmagan savol indeksini topish funksiyasi
+    function findNextUnansweredIndex(fromIndex) {
+      // 1. Joriy savoldan oxirigacha belgilanmaganini qidirish
+      for (let i = fromIndex + 1; i < questionsData.length; i++) {
+        if (userAnswers[questionsData[i].id] === undefined) {
+          return i;
+        }
+      }
+      // 2. Agar oxirigacha topilmasa, boshidan joriy savolgacha o'tkazib ketilganlarini qidirish
+      for (let i = 0; i < fromIndex; i++) {
+        if (userAnswers[questionsData[i].id] === undefined) {
+          return i;
+        }
+      }
+      // Barcha savollar belgilangan bo'lsa
+      return -1;
+    }
+
+    // Javob belgilanganda ishlaydigan funksiya
     function selectAnswer(questionId, optionKey) {
       userAnswers[questionId] = optionKey;
       saveStateToLocalStorage();
       showQuestion(currentIndex);
+
+      // Foydalanuvchi qaysi variantni bosganini ko'rishi uchun 350ms kutib, keyingisiga o'tadi
+      setTimeout(() => {
+        const nextIndex = findNextUnansweredIndex(currentIndex);
+        if (nextIndex !== -1) {
+          showQuestion(nextIndex);
+        }
+      }, 350);
     }
 
     function jumpToQuestion(index) {
